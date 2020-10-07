@@ -2,11 +2,12 @@
 """
 Copyright (c) 2019 - present AppSeed.us
 """
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 from django.template import loader
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.generic import ListView, DetailView, View
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,7 +15,6 @@ from Prediction.serializers import InsuranceClaimSerializer
 from Prediction.views import InsuranceClaimPredict
 from app.models import InsuranceClaim
 from app.plots import plot_class_prob, plot_local_exp
-
 
 
 @login_required(login_url="/login/")
@@ -58,29 +58,32 @@ class InsuranceClaimDV(DetailView):
     model = InsuranceClaim
     template_name = "details.html"
 
+    @csrf_exempt
+    def post(self, request, **kwargs):
+        obj = super().get_object()
+        paginator = Paginator(obj.get_fields(), 5)
+        page_n = self.request.POST.get("page_n", None)
+        results = {key: val for key, val in paginator.page(page_n).object_list}
+        return JsonResponse({"results": results})
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         claim_obj = context['object']
         lime_obj = claim_obj.claim.all()
         data = InsuranceClaimSerializer(claim_obj).data
+        paginator = Paginator(list(data.items()), 5)
 
-        # table paginator
-        table_paginator = Paginator(list(data.items()), 5)
-        page = self.request.GET.get("page", 1)
-        try:
-            items = table_paginator.page(page)
-        except PageNotAnInteger:
-            items = table_paginator.page(1)
-        except EmptyPage:
-            items = table_paginator.page(table_paginator.num_pages)
-        print(table_paginator.page_range)
+        context["page_n"] = 1
+        context["paginator"] = paginator
+        context["first_page"] = paginator.page(1).object_list
+        context["page_range"] = paginator.page_range
 
-        context["table_items"] = items
         labels = ["자동지급", "심사", "조사"]
         prob = [data[label] for label in labels]
         label = labels[prob.index(max(prob))]
         context["label"] = label
         context["prob"] = max(prob)
+        # class prob plot
         context["class_prob_plot"] = plot_class_prob(labels, prob)
         # local explanation plot
         context["local_exp_plot"] = plot_local_exp(lime_obj.values())
