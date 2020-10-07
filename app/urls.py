@@ -16,9 +16,8 @@ urlpatterns = [
 
     # The home page
     path('', views.index, name='home'),
+    path("create", views.InsuranceClaimCV.as_view(), name="create"),
     path("tables", views.InsuranceClaimLV.as_view(), name="tables"),
-    path("details", views.InsuranceClaimRedirection.as_view(), name="details_info"),
-    path("details/<int:pk>", views.InsuranceClaimDV.as_view(), name="details"),
-    # path("<int:pk>", views.InsuranceClaimDV.as_view(), name="detail"),
-    path("create", views.InsuranceClaimCV.as_view(), name="create")
+    path("details", views.InsuranceClaimRedirection.as_view()),
+    path("details/<int:pk>", views.InsuranceClaimDV.as_view(), name="details")
 ]

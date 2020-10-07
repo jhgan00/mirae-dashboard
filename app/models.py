@@ -4,7 +4,7 @@ License: MIT
 Copyright (c) 2019 - present AppSeed.us
 """
 from django.db import models
-
+from django.core.paginator import Paginator
 
 class InsuranceClaim(models.Model):
     ID = models.IntegerField(primary_key=True)
@@ -48,13 +48,24 @@ class InsuranceClaim(models.Model):
     class Meta:
         ordering = ("-ID",)
 
+    def get_fields(self):
+        items = [(field.name, field.value_to_string(self)) for field in InsuranceClaim._meta.fields]
+        return items
+
+    def get_absolute_url(self):
+        pass
+
 
 class LimeReport(models.Model):
-    class Meta:
-        unique_together = (('claim', 'rank'),)
     claim = models.ForeignKey(InsuranceClaim, on_delete=models.CASCADE, related_name="claim")  # N:1 FK
     rank = models.IntegerField()
     feature = models.CharField(max_length=50)
     local_exp = models.FloatField()
     discretized = models.TextField(null=True, max_length=100)
     value = models.FloatField()
+
+    class Meta:
+        unique_together = (('claim', 'rank'),)
+
+    def get_fields(self):
+        return [(field.name, field.value_to_string(self)) for field in LimeReport._meta.fields]

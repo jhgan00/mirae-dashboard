@@ -2,6 +2,7 @@
 """
 Copyright (c) 2019 - present AppSeed.us
 """
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 from django.template import loader
@@ -63,7 +64,18 @@ class InsuranceClaimDV(DetailView):
         lime_obj = claim_obj.claim.all()
         data = InsuranceClaimSerializer(claim_obj).data
 
-        # class probability plot
+        # table paginator
+        table_paginator = Paginator(list(data.items()), 5)
+        page = self.request.GET.get("page", 1)
+        try:
+            items = table_paginator.page(page)
+        except PageNotAnInteger:
+            items = table_paginator.page(1)
+        except EmptyPage:
+            items = table_paginator.page(table_paginator.num_pages)
+        print(table_paginator.page_range)
+
+        context["table_items"] = items
         labels = ["자동지급", "심사", "조사"]
         prob = [data[label] for label in labels]
         label = labels[prob.index(max(prob))]
