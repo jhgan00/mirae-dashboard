@@ -4,25 +4,18 @@ Copyright (c) 2019 - present AppSeed.us
 """
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from django.template import loader
 from django.http import HttpResponse, JsonResponse
-from django.views.generic import ListView, DetailView, View
+from django.views.generic import ListView, DetailView, View, TemplateView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from Prediction.serializers import InsuranceClaimSerializer
 from Prediction.views import InsuranceClaimPredict
 from app.models import InsuranceClaim
-from app.plots import plot_class_prob, plot_local_exp
-
-
-@login_required(login_url="/login/")
-def index(request):
-    context = {}
-    context['segment'] = 'index'
-    html_template = loader.get_template('index.html')
-    return HttpResponse(html_template.render(context, request))
+from app.plots import plot_class_prob, plot_local_exp, plot_threshold
+from app.forms import CostForm
 
 
 @login_required(login_url="/login/")
@@ -33,8 +26,42 @@ def profile(request):
     return HttpResponse(html_template.render(context, request))
 
 
+class HomeView(TemplateView):
+    template_name = "index.html"
+
+    def get(self, request, *args, **kwargs):
+        threshold_plot = plot_threshold()
+        form = CostForm(initial=dict(cost01=3, cost02=3, cost10=3, cost12=3, cost20=3, cost21=3, manual=1))
+        data = dict(
+            form=form,
+            threshold_plot=threshold_plot
+        )
+        return render(request, self.template_name, data)
+
+    @csrf_exempt
+    def post(self, request):
+        """
+        post request : 두 가지 경우 존재함
+        1. 그래프 출력 변경
+        2. threshold 변경
+        :param request:
+        :return:
+        """
+        form = CostForm(request.POST)
+        assert form.is_valid()
+        print("plotting")
+        threshold_plot = plot_threshold(**form.cleaned_data)
+        print("DONE")
+        data = dict(
+            form=form,
+            threshold_plot = threshold_plot
+        )
+        print("DONE")
+        return render(request, self.template_name, data)
+
+
 class InsuranceClaimCV(APIView):
-    def post(self, request, format=None):
+    def post(self, request):
         InsuranceClaimPredict().post(request)
         return Response(status=200)
 

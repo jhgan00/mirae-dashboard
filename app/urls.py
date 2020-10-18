@@ -15,7 +15,7 @@ urlpatterns = [
     # re_path(r'^.*\.html', views.pages, name='pages'),
 
     # The home page
-    path('', views.index, name='home'),
+    path('', views.HomeView.as_view(), name='home'),
     path('profile', views.profile, name="profile"),
 
     path("create", views.InsuranceClaimCV.as_view(), name="create"),

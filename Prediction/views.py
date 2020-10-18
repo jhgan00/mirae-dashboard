@@ -11,11 +11,14 @@ def create_records(X, predictors, classifier, explainer, classification_threshol
     class_names = ["자동지급", "심사", "조사"]
     class_prob = classifier.predict_proba(predictors.values.reshape((1,-1)))
     insurance_claim = dict(X.to_dict(), **dict(zip(class_names, np.round(class_prob[0] * 100, 2))))
+    insurance_claim["prediction"] = class_names[class_prob.argmax()]
 
     if class_prob.max() > classification_threshold:
+
         insurance_claim["target"] = class_names[class_prob.argmax()]
 
     else:
+
         insurance_claim["target"] = None
         np.random.seed(0)
         explanation = explainer.explain_instance(
@@ -68,7 +71,6 @@ class InsuranceClaimPredict(APIView):
         try:
 
             create_records(X, predictors, classifier, explainer, PredictionConfig.CLASSIFICATION_THRESHOLD)
-
             return Response(status=200)
 
         except AssertionError:

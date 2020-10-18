@@ -43,6 +43,7 @@ class InsuranceClaim(models.Model):
     자동지급 = models.FloatField(null=True)
     심사 = models.FloatField(null=True)
     조사 = models.FloatField(null=True)
+    prediction = models.CharField(max_length=15, null=True)
     target = models.CharField(max_length=15, null=True)
 
     class Meta:
