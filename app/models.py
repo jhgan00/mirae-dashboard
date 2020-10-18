@@ -57,7 +57,7 @@ class InsuranceClaim(models.Model):
 
 
 class LimeReport(models.Model):
-    claim = models.ForeignKey(InsuranceClaim, on_delete=models.CASCADE, related_name="claim")  # N:1 FK
+    claim = models.ForeignKey(InsuranceClaim, on_delete=models.CASCADE, related_name="lime")  # N:1 FK
     rank = models.IntegerField()
     feature = models.CharField(max_length=50)
     local_exp = models.FloatField()

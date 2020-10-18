@@ -6,6 +6,7 @@ import os
 class PredictionConfig(AppConfig):
     name = 'Prediction'
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    CLASSIFICATION_THRESHOLD = 0.9
 
     # classifier
     CLASSIFIER_DIR = os.path.join(BASE_DIR, "Prediction/classifier/")

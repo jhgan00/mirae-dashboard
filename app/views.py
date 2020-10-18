@@ -25,6 +25,14 @@ def index(request):
     return HttpResponse(html_template.render(context, request))
 
 
+@login_required(login_url="/login/")
+def profile(request):
+    context = {}
+    context['segment'] = 'profile'
+    html_template = loader.get_template('profile.html')
+    return HttpResponse(html_template.render(context, request))
+
+
 class InsuranceClaimCV(APIView):
     def post(self, request, format=None):
         InsuranceClaimPredict().post(request)
@@ -38,12 +46,15 @@ class InsuranceClaimLV(ListView):
     paginate_by = 10
 
     def get_context_data(self, **kwargs):
+        # 전체 청구건 리스트
+        # 미분류 청구건 리스트
         context = super().get_context_data(**kwargs)
         queryset = InsuranceClaim.objects.all()
         for label in ["자동지급", "심사", "조사", None]:
             cnt = queryset.filter(target=label).count()
             label_str = f"n_{label}"
             context[label_str] = cnt
+        context["unclassified_list"] = queryset.filter(target__isnull=True)
         return context
 
 
@@ -68,23 +79,29 @@ class InsuranceClaimDV(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        claim_obj = context['object']
-        lime_obj = claim_obj.claim.all()
-        data = InsuranceClaimSerializer(claim_obj).data
-        paginator = Paginator(list(data.items()), 5)
 
+        # claim data
+        claim_obj = context['object']
+        claim = InsuranceClaimSerializer(claim_obj).data
+
+        # lime data
+        lime_obj = claim_obj.lime.all()
+        labels = ["자동지급", "심사", "조사"]
+
+        # init datatable pagination
+        paginator = Paginator(list(claim.items()), 5)
         context["page_n"] = 1
         context["paginator"] = paginator
         context["first_page"] = paginator.page(1).object_list
         context["page_range"] = paginator.page_range
 
-        labels = ["자동지급", "심사", "조사"]
-        prob = [data[label] for label in labels]
+        #
+        prob = [claim[label] for label in labels]
         label = labels[prob.index(max(prob))]
         context["label"] = label
         context["prob"] = max(prob)
-        # class prob plot
+
+        # plots
         context["class_prob_plot"] = plot_class_prob(labels, prob)
-        # local explanation plot
         context["local_exp_plot"] = plot_local_exp(lime_obj.values())
         return context
