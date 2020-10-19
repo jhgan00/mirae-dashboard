@@ -18,8 +18,8 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">Traffic</h5>
-                                        <span class="h2 font-weight-bold mb-0">350,897</span>
+                                        <h5 class="card-title text-uppercase text-muted mb-0">Threshold</h5>
+                                        <span class="h2 font-weight-bold mb-0">{{ threshold }}%</span>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon icon-shape bg-danger text-white rounded-circle shadow">
@@ -28,8 +28,7 @@
                                     </div>
                                 </div>
                                 <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-success mr-2"><i class="fa fa-arrow-up"></i> 3.48%</span>
-                                    <span class="text-nowrap">Since last month</span>
+                                    <span class="text-nowrap">자동 분류 기준</span>
                                 </p>
                             </div>
                         </div>
@@ -39,8 +38,8 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">New users</h5>
-                                        <span class="h2 font-weight-bold mb-0">2,356</span>
+                                        <h5 class="card-title text-uppercase text-muted mb-0">자동화 비율</h5>
+                                        <span class="h2 font-weight-bold mb-0">{{ automation }}%</span>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
@@ -49,8 +48,7 @@
                                     </div>
                                 </div>
                                 <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-danger mr-2"><i class="fas fa-arrow-down"></i> 3.48%</span>
-                                    <span class="text-nowrap">Since last week</span>
+                                    <span class="text-nowrap">자동 분류 청구건 비율(기대값)</span>
                                 </p>
                             </div>
                         </div>
@@ -60,8 +58,8 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">자동화 청구건 비율</h5>
-                                        <span class="h2 font-weight-bold mb-0">924</span>
+                                        <h5 class="card-title text-uppercase text-muted mb-0">총 분류비용</h5>
+                                        <span class="h2 font-weight-bold mb-0">{{ total_cost }}</span>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon icon-shape bg-yellow text-white rounded-circle shadow">
@@ -70,8 +68,7 @@
                                     </div>
                                 </div>
                                 <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-warning mr-2"><i class="fas fa-arrow-down"></i> 1.10%</span>
-                                    <span class="text-nowrap">Since yesterday</span>
+                                    <span class="text-nowrap">청구건 분류의 총 비용</span>
                                 </p>
                             </div>
                         </div>
@@ -81,8 +78,8 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">Threshold</h5>
-                                        <span class="h2 font-weight-bold mb-0">{{ threshold }}%</span>
+                                        <h5 class="card-title text-uppercase text-muted mb-0">비용 개선</h5>
+                                        <span class="h2 font-weight-bold mb-0">{{ improvement }}%</span>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon icon-shape bg-info text-white rounded-circle shadow">
@@ -91,8 +88,7 @@
                                     </div>
                                 </div>
                                 <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-success mr-2"><i class="fas fa-arrow-up"></i> 12%</span>
-                                    <span class="text-nowrap">Since last month</span>
+                                    <span class="text-nowrap">자동화를 통한 비용 개선폭</span>
                                 </p>
                             </div>
                         </div>
@@ -132,7 +128,7 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <form action="." method="post">
+                        <form action="/settings" method="post">
                             {% csrf_token %}
                             <table class="table align-items-center table-flush">
                                 {{ form.as_table }}

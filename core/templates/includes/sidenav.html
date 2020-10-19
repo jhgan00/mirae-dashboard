@@ -95,32 +95,29 @@
             </form>
             <!-- Navigation -->
             <ul class="navbar-nav">
-                <li class="nav-item {% if 'index' in segment %} active {% endif %}">
-                    <a class=" nav-link" href="/">
-                        <i class="ni ni-tv-2 text-primary"></i> Dashboard
+                <li class="nav-item {% if 'home' in segment %} active {% endif %}">
+                    <a class="nav-link " href="/">
+                        <i class="ni ni-app text-info"></i> Home
                     </a>
                 </li>
+
                 <li class="nav-item {% if 'tables' in segment %} active {% endif %}">
                     <a class="nav-link " href="/tables">
-                        <i class="ni ni-bullet-list-67 text-info"></i> Claim List
+                        <i class="ni ni-bullet-list-67 text-green"></i> Claim List
                     </a>
                 </li>
                 <li class="nav-item {% if 'details' in segment %} active {% endif %}">
                     <a class="nav-link " href="/details">
-                        <i class="ni ni-planet text-blue"></i> Claim Detail
-                    </a>
-                </li>
-                <li class="nav-item {% if 'profile' in segment %} active {% endif %}">
-                    <a class="nav-link " href="/profile">
-                        <i class="ni ni-single-02 text-yellow"></i> User Profile
+                        <i class="ni ni-planet text-warning"></i> Claim Detail
                     </a>
                 </li>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'logout' %}">
-                        <i class="ni ni-user-run text-red"></i> Logout
+                <li class="nav-item {% if 'index' in segment %} active {% endif %}">
+                    <a class=" nav-link" href="/settings">
+                        <i class="ni ni-settings text-gray"></i> Settings
                     </a>
                 </li>
+
             </ul>
             <!-- Divider -->
             <hr class="my-3">

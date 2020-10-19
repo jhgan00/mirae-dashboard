@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from rest_framework.response import Response
@@ -70,7 +71,7 @@ class InsuranceClaimPredict(APIView):
 
         try:
 
-            create_records(X, predictors, classifier, explainer, PredictionConfig.CLASSIFICATION_THRESHOLD)
+            create_records(X, predictors, classifier, explainer, float(os.environ["THRESHOLD"]) * 0.01)
             return Response(status=200)
 
         except AssertionError:
