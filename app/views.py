@@ -179,9 +179,28 @@ class InsuranceClaimLV(ListView):
         context = super().get_context_data(**kwargs)
         queryset = InsuranceClaim.objects.all()
         for label in ["자동지급", "심사", "조사", None]:
-            cnt = queryset.filter(target=label).count()
-            label_str = f"n_{label}"
-            context[label_str] = cnt
+            prv_cnt = queryset.filter(target=label).filter(base_ym=int(os.environ["base_ym"])-1).count()
+            cnt = queryset.filter(target=label).filter(base_ym=os.environ["base_ym"]).count()
+
+            if prv_cnt > cnt:
+                sign = "fa-arrow-down"
+
+            else:
+                sign = "fa-arrow-up"
+
+            try:
+                inc = cnt/prv_cnt - 1
+
+            except ZeroDivisionError:
+                inc = 0
+
+            if cnt > 1000:
+                cnt = str(cnt * 0.001).replace(".", ",")
+
+            context[f"cnt_{label}"] = cnt
+            context[f"inc_{label}"] = np.abs(round(inc * 100, 2))
+            context[f"sign_{label}"] = sign
+
         context["unclassified_list"] = queryset.filter(target__isnull=True)
         return context
 

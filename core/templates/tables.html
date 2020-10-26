@@ -16,7 +16,7 @@
                                 <div class="row">
                                     <div class="col">
                                         <h5 class="card-title text-uppercase text-muted mb-0">자동지급 건수</h5>
-                                        <span class="h2 font-weight-bold mb-0">{{ n_자동지급 }}건</span>
+                                        <span class="h2 font-weight-bold mb-0">{{ cnt_자동지급 }}건</span>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon icon-shape bg-success text-white rounded-circle shadow">
@@ -25,7 +25,7 @@
                                     </div>
                                 </div>
                                 <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-success mr-2"><i class="fa fa-arrow-up"></i> 3.48%</span>
+                                    <span class="text mr-2"><i class="fa {{ sign_자동지급 }}"></i> {{ inc_자동지급 }}%</span>
                                     <span class="text-nowrap">Since last month</span>
                                 </p>
                             </div>
@@ -37,7 +37,7 @@
                                 <div class="row">
                                     <div class="col">
                                         <h5 class="card-title text-uppercase text-muted mb-0">심사 건수</h5>
-                                        <span class="h2 font-weight-bold mb-0">{{ n_심사 }}건</span>
+                                        <span class="h2 font-weight-bold mb-0">{{ cnt_심사 }}건</span>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon icon-shape bg-yellow text-white rounded-circle shadow">
@@ -46,8 +46,8 @@
                                     </div>
                                 </div>
                                 <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-danger mr-2"><i class="fas fa-arrow-down"></i> 3.48%</span>
-                                    <span class="text-nowrap">Since last week</span>
+                                    <span class="text mr-2"><i class="fas {{ sign_심사 }}"></i> {{ inc_심사 }}%</span>
+                                    <span class="text-nowrap">Since last month</span>
                                 </p>
                             </div>
                         </div>
@@ -58,7 +58,7 @@
                                 <div class="row">
                                     <div class="col">
                                         <h5 class="card-title text-uppercase text-muted mb-0">조사 건수 </h5>
-                                        <span class="h2 font-weight-bold mb-0">{{ n_조사 }}건</span>
+                                        <span class="h2 font-weight-bold mb-0">{{ cnt_조사 }}건</span>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
@@ -67,8 +67,8 @@
                                     </div>
                                 </div>
                                 <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-warning mr-2"><i class="fas fa-arrow-down"></i> 1.10%</span>
-                                    <span class="text-nowrap">Since yesterday</span>
+                                    <span class="text mr-2"><i class="fas {{ sign_조사 }}"></i> {{ inc_조사 }}%</span>
+                                    <span class="text-nowrap">Since last month</span>
                                 </p>
                             </div>
                         </div>
@@ -79,7 +79,7 @@
                                 <div class="row">
                                     <div class="col">
                                         <h5 class="card-title text-uppercase text-muted mb-0">미분류 건수</h5>
-                                        <span class="h2 font-weight-bold mb-0">{{ n_None }}건</span>
+                                        <span class="h2 font-weight-bold mb-0"> {{ cnt_None }}건</span>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon icon-shape bg-info text-white rounded-circle shadow">
@@ -88,8 +88,8 @@
                                     </div>
                                 </div>
                                 <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-success mr-2"><i class="fas fa-arrow-up"></i> 12%</span>
-                                    <span class="text-nowrap">Since last month</span>
+                                    <span class="text-success mr-2"></span>
+                                    <span class="text-nowrap"></span>
                                 </p>
                             </div>
                         </div>

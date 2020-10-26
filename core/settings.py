@@ -129,7 +129,7 @@ STATICFILES_DIRS = (
 #############################################################
 #############################################################
 
-# ENV VARIABLES
+# ENV VARIABLES: COST
 os.environ["COST01"] = "3"
 os.environ["COST02"] = "3"
 os.environ["COST10"] = "3"
@@ -145,3 +145,6 @@ os.environ["ERROR_COST"] = "74382.0"
 os.environ["CLF_COST"] = "50754.0"
 os.environ["TOTAL_COST"] = "13904.0"
 os.environ["IMPROVEMENT"] = "58.81"
+
+# ENV VARIABLES: MODEL
+os.environ["base_ym"] = "201903"
