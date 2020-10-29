@@ -16,11 +16,10 @@ urlpatterns = [
 
     # The home page
     path("", views.HomeView.as_view(), name="home"),
-    path('settings', views.SettingView.as_view(), name='settings'),
+    path('settings', views.TestView.as_view(), name='test'),
     path('profile', views.profile, name="profile"),
 
     path("create", views.InsuranceClaimCV.as_view(), name="create"),
-
     path("tables", views.InsuranceClaimLV.as_view(), name="tables"),
     path("details", views.InsuranceClaimRedirection.as_view()),
     path("details/<int:pk>", views.InsuranceClaimDV.as_view(), name="details")

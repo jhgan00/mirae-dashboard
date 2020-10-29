@@ -4,7 +4,7 @@ License: MIT
 Copyright (c) 2019 - present AppSeed.us
 """
 from django.db import models
-from django.core.paginator import Paginator
+
 
 class InsuranceClaim(models.Model):
     ID = models.IntegerField(primary_key=True)
@@ -49,7 +49,7 @@ class InsuranceClaim(models.Model):
     target = models.CharField(max_length=15, null=True)
 
     class Meta:
-        ordering = ("-ID",)
+        ordering = ("-base_ym","-ID")
 
     def get_fields(self):
         items = [(field.name, field.value_to_string(self)) for field in InsuranceClaim._meta.fields]
@@ -59,21 +59,8 @@ class InsuranceClaim(models.Model):
         pass
 
 
-class LimeReport(models.Model):
-    claim = models.ForeignKey(InsuranceClaim, on_delete=models.CASCADE, related_name="lime")  # N:1 FK
-    rank = models.IntegerField()
-    feature = models.CharField(max_length=50)
-    local_exp = models.FloatField()
-    discretized = models.TextField(null=True, max_length=100)
-    value = models.FloatField()
-
-    class Meta:
-        unique_together = (('claim', 'rank'),)
-
-    def get_fields(self):
-        return [(field.name, field.value_to_string(self)) for field in LimeReport._meta.fields]
-
 
 class PredictionPerformance(models.Model):
     base_ym = models.ForeignKey(InsuranceClaim, on_delete=models.CASCADE, related_name="performance")  # N:1 FK
     performance = models.FloatField()
+    automation = models.FloatField(default=0)

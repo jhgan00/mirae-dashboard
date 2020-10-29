@@ -7,20 +7,21 @@ from django.core.paginator import Paginator
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from django.template import loader
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpRequest
 from django.views.generic import ListView, DetailView, View, TemplateView
+
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from Prediction.serializers import InsuranceClaimSerializer
 from Prediction.views import InsuranceClaimPredict
-from Prediction.apps import PredictionConfig
 from app.models import InsuranceClaim, PredictionPerformance
-from app.plots import plot_class_prob, plot_force, plot_threshold, plot_performance, plot_feature_importance
-from app.forms import CostForm
+from app.plots import plot_class_prob, plot_force, plot_performance, plot_classification
+from app.forms import InsuranceClaimForm, InsuranceClaimUpdateForm
 import os
 import numpy as np
 import pandas as pd
-from sklearn.metrics import confusion_matrix
+
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 mapper = {'nur_hosp_yn': '요양병원여부',
  'ac_ctr_diff': '청구일계약일기간',
@@ -65,14 +66,16 @@ def profile(request):
     return HttpResponse(html_template.render(context, request))
 
 
-class HomeView(ListView):
+class HomeView(LoginRequiredMixin,ListView):
+    login_url = '/login/'
     template_name = "index.html"
     model = InsuranceClaim
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
+        claims = self.model.objects.filter(base_ym=os.environ["base_ym"])
         prev_claims = self.model.objects.filter(base_ym=int(os.environ["base_ym"])-1).count()
-        n_claims = self.model.objects.filter(base_ym=os.environ["base_ym"]).count()
+        n_claims = claims.count()
         inc_claims = round((n_claims/prev_claims - 1) * 100, 2)
 
         n_automation = self.model.objects \
@@ -91,21 +94,9 @@ class HomeView(ListView):
         if inc_performance < 1: sign_performance = "fa-arrow-down"
         else: sign_performance = "fa-arrow-up"
 
-        normal = PredictionConfig.classifier_normal
-        na = PredictionConfig.classifier_na
+        classification = pd.DataFrame(claims.values()).target.value_counts().rename("cnt").reset_index()
+        classification_plot = plot_classification(classification)
 
-        fi = pd.concat([
-            pd.DataFrame(
-                list(zip(normal.feature_name_, normal.feature_importances_)),
-                columns=["normal_feature", "normal_importance"]
-            ).sort_values("normal_importance", ascending=False).head(5).assign(rank=np.arange(1,6)).reset_index(drop=True),
-            pd.DataFrame(
-                list(zip(na.feature_name_, na.feature_importances_)),
-                columns=["na_feature", "na_importance"]
-            ).sort_values("na_importance", ascending=False).head(5).assign(rank=np.arange(1,6)).reset_index(drop=True)
-        ], axis=1).to_dict("records")
-
-        context["feature_importances"] = fi
 
         context["performance_plot"] = performance_plot
         context["threshold"] = os.environ["THRESHOLD"]
@@ -123,147 +114,45 @@ class HomeView(ListView):
         context["inc_performance"] = np.abs(inc_performance)
         context["sign_performance"] = sign_performance
 
-        context["importance_plot"] = plot_feature_importance()
+        context["classification_plot"] = classification_plot
 
         return context
 
 
-class SettingView(TemplateView):
-    template_name = "settings.html"
-
-
-    def update_threshold(self, cost01, cost02, cost10, cost12, cost21, cost20, manual):
-
-        def eval_threshold(result, thr, error_cost, manual):
-            prediction = result.query(f"prob > {thr}")
-            confusion = confusion_matrix(prediction.target.values, prediction.prediction.values)
-
-            n_manual = result.query(f"prob <= {thr}").shape[0]
-
-            error_cost = (error_cost * confusion).sum()
-            clf_cost = (manual * n_manual)
-            total_cost = (error_cost + clf_cost) / 9
-            automation = 1 - (n_manual / result.shape[0])
-            improvement = 1 - total_cost / base_cost
-
-            return error_cost, clf_cost, total_cost, automation, improvement
-
-        result = pd.DataFrame(InsuranceClaim.objects.filter(base_ym__lte=201910).values())
-        result = result.assign(prob=result[["자동지급", "심사", "조사"]].max(axis=1))
-
-        base_cost = (manual * result.shape[0]) / 9
-
-        thrs = np.arange(0.5, 1, 0.01)
-        error_cost = np.array(
-            [[0, cost01, cost02],
-             [cost10, 0, cost12],
-             [cost20, cost21, 0]]
-        )
-        df = pd.DataFrame([
-            eval_threshold(result, thr, error_cost, manual) for thr in thrs],
-            columns=["error_cost", "clf_cost", "total_cost", "automation", "improvement"]
-        ).assign(threshold=thrs, base_cost=base_cost)
-
-        best_idx = df.total_cost.idxmin()
-
-        os.environ["THRESHOLD"] = str(int(df.threshold.values[best_idx] * 100))
-        os.environ["ERROR_COST"] = str(round(df.error_cost.values[best_idx]))
-        os.environ["CLF_COST"] = str(round(df.clf_cost.values[best_idx] , 2))
-        os.environ["TOTAL_COST"] = str(round(df.total_cost.values[best_idx], 2))
-        os.environ["AUTOMATION"] = str(round(df.automation.values[best_idx] * 100, 2))
-        os.environ["IMPROVEMENT"] = str(round(df.improvement.values[best_idx] * 100, 2))
-        os.environ["BASE_COST"] = str(base_cost)
-
-        return df
+class TestView(LoginRequiredMixin,TemplateView):
+    login_url = '/login/'
+    template_name = "test.html"
 
     def get(self, request, *args, **kwargs):
-
-        cost01 = float(os.environ['COST01'])
-        cost02 = float(os.environ['COST02'])
-        cost10 = float(os.environ['COST10'])
-        cost12 = float(os.environ['COST12'])
-        cost20 = float(os.environ['COST20'])
-        cost21 = float(os.environ['COST21'])
-        manual = float(os.environ['MANUAL'])
-
-        filename = f"{cost01}_{cost02}_{cost10}_{cost12}_{cost20}_{cost21}_{manual}.html"
-        fpath = f"app/includes/{filename}"
-
-        if os.path.isfile(fpath):
-
-            with open(fpath, "r") as html:
-                threshold_plot = html.read()
-
-        else:
-            df = self.update_threshold(cost01, cost02, cost10, cost12, cost21, cost20, manual)
-            threshold_plot = plot_threshold(df, fpath)
-
-        form = CostForm(
-            initial=dict(cost01=cost01, cost02=cost02, cost10=cost10, cost12=cost12, cost20=cost20, cost21=cost21, manual=manual)
-        )
-        data = dict(
-            form=form,
-            threshold_plot=threshold_plot,
-            threshold=os.environ["THRESHOLD"],
-            improvement=os.environ["IMPROVEMENT"],
-            total_cost=os.environ["TOTAL_COST"],
-            error_cost=os.environ["ERROR_COST"],
-            clf_cost=os.environ["CLF_COST"],
-            automation=os.environ["AUTOMATION"]
-        )
+        form = InsuranceClaimForm()
+        data = dict(form=form)
         return render(request, self.template_name, data)
 
     @csrf_exempt
     def post(self, request):
-
-        if "cost" in request.POST:
-
-            form = CostForm(request.POST)
+        if "create" in request.POST:
+            form = InsuranceClaimForm(request.POST)
             assert form.is_valid()
-
             data = form.cleaned_data
-            cost01 = data['cost01']
-            cost02 = data['cost02']
-            cost10 = data['cost10']
-            cost12 = data['cost12']
-            cost20 = data['cost20']
-            cost21 = data['cost21']
-            manual = data['manual']
 
-            filename = f"{cost01}_{cost02}_{cost10}_{cost12}_{cost20}_{cost21}_{manual}.html"
-            fpath = f"app/includes/{filename}"
+            request = HttpRequest()
+            request.method = "POST"
+            request.data = form.cleaned_data
+            InsuranceClaimPredict().post(request)
+            # 만약 폼이 적절하면 Prediction API로 보내서 결과 받아오기
 
-            if os.path.isfile(fpath):
-
-                with open(fpath, "r") as html:
-                    threshold_plot = html.read()
-
-            else:
-
-                df = self.update_threshold(cost01, cost02, cost10, cost12, cost21, cost20, manual)
-                threshold_plot = plot_threshold(df, fpath)
-
-            data = dict(
-                form=form,
-                threshold_plot=threshold_plot,
-                threshold=os.environ["THRESHOLD"],
-                improvement=os.environ["IMPROVEMENT"],
-                total_cost=os.environ["TOTAL_COST"],
-                error_cost=os.environ["ERROR_COST"],
-                clf_cost=os.environ["CLF_COST"],
-                automation=os.environ["AUTOMATION"]
-            )
-
-            return render(request, self.template_name, data)
+            return redirect(f'/details/{data["ID"]}')
 
 
-class InsuranceClaimCV(APIView):
+class InsuranceClaimCV(LoginRequiredMixin, APIView):
+    login_url = '/login/'
     def post(self, request):
         InsuranceClaimPredict().post(request)
         return Response(status=200)
 
 
-class InsuranceClaimLV(ListView):
+class InsuranceClaimLV(LoginRequiredMixin, ListView):
+    login_url = '/login/'
     model = InsuranceClaim
     template_name = "tables.html"
     context_object_name = "claims"
@@ -272,7 +161,7 @@ class InsuranceClaimLV(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         queryset = InsuranceClaim.objects.all()
-        for label in ["자동지급", "심사", "조사", None]:
+        for label in ["자동지급", "심사", "조사"]:
             prv_cnt = queryset.filter(target=label).filter(base_ym=int(os.environ["base_ym"])-1).count()
             cnt = queryset.filter(target=label).filter(base_ym=os.environ["base_ym"]).count()
 
@@ -286,29 +175,50 @@ class InsuranceClaimLV(ListView):
             context[f"inc_{label}"] = np.abs(round(inc * 100, 2))
             context[f"sign_{label}"] = sign
 
+        unclassified = queryset.filter(target__isnull=True).count()
+        context["cnt_None"] = unclassified
 
         context["unclassified_list"] = queryset.filter(target__isnull=True)
         return context
 
 
-class InsuranceClaimRedirection(View):
+class InsuranceClaimRedirection(LoginRequiredMixin, View):
+    login_url = '/login/'
     def get(self, request):
-        latest = InsuranceClaim.objects.latest("ID")
+        latest = InsuranceClaim.objects.latest("base_ym")
         dst = f"/details/{latest.ID}"
         return redirect(dst)
 
 
-class InsuranceClaimDV(DetailView):
+class InsuranceClaimDV(LoginRequiredMixin, DetailView):
+    login_url = '/login/'
+    redirect_field_name = 'details'
+
     model = InsuranceClaim
     template_name = "details.html"
 
     @csrf_exempt
     def post(self, request, **kwargs):
-        obj = super().get_object()
-        paginator = Paginator(obj.get_fields(), 5)
-        page_n = self.request.POST.get("page_n", None)
-        results = {key: val for key, val in paginator.page(page_n).object_list}
-        return JsonResponse({"results": results})
+
+        if 'update' in request.POST:
+            claim = self.get_object()
+            ID = claim.ID
+
+            form = InsuranceClaimUpdateForm(request.POST, instance=claim)
+            assert form.is_valid()
+            claim = form.save(commit=False)
+            claim.save(update_fields=list(form.fields))
+
+            return redirect(f"/details/{ID}")
+
+        else:
+            print(request.POST)
+
+            obj = super().get_object()
+            paginator = Paginator(obj.get_fields(), 5)
+            page_n = self.request.POST.get("page_n", None)
+            results = {key: val for key, val in paginator.page(page_n).object_list}
+            return JsonResponse({"results": results})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -322,6 +232,7 @@ class InsuranceClaimDV(DetailView):
 
         # lime data
         labels = ["자동지급", "심사", "조사"]
+        context['labels'] = labels
 
         # init datatable pagination
         paginator = Paginator(list(claim.items()), 5)
@@ -339,4 +250,7 @@ class InsuranceClaimDV(DetailView):
         # plots
         context["class_prob_plot"] = plot_class_prob(labels, prob)
         context["force_plot"] = plot_force(data)
+        context['form'] = InsuranceClaimUpdateForm()
+
+
         return context
