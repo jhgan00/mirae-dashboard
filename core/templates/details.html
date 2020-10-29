@@ -88,92 +88,110 @@
         </div>
     </div>
 
-
-    <div class="container-fluid mt--7">
-        <!-- Table -->
-        <div class="row">
-            <div class="col-xl-4">
-                <div class="card shadow">
-                    <div class="card-header border-0">
-                        <h3 class="mb-0">청구건 정보</h3>
-                    </div>
-                    <div class="table-responsive">
-                        <table id="datatable" class="table align-items-center table-flush" style="height: max-content">
-                            <thead class="thead-light">
-                            <tr>
-                                <th scope="col" style="width: 50%">feature</th>
-                                <th scope="col" style="width: 50%">value</th>
-                            </tr>
-                            </thead>
-                            <tbody id="features">
-                            {% for feature, value in first_page %}
+    <div class="body">
+        <div class="container-fluid mt--7">
+            <!-- Table -->
+            <div class="row row-eq-height">
+                <div class="col-md-6">
+                    <div class="card shadow">
+                        <div class="card-header border-0">
+                            <h5 class="card-title text-uppercase text-muted mb-0">CLAIM DETAILS</h5>
+                            <h2 class="mb-0">청구건 정보</h2>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="datatable" class="table align-items-center table-flush" style="height: max-content">
+                                <thead class="thead-light">
                                 <tr>
-                                    <td>{{ feature }}</td>
-                                    <td>{{ value }}</td>
+                                    <th scope="col" style="width: 50%">feature</th>
+                                    <th scope="col" style="width: 50%">value</th>
                                 </tr>
-                            {% endfor %}
+                                </thead>
+                                <tbody id="features">
+                                {% for feature, value in first_page %}
+                                    <tr>
+                                        <td>{{ feature }}</td>
+                                        <td>{{ value }}</td>
+                                    </tr>
+                                {% endfor %}
 
-                            </tbody>
-                        </table>
-                        <div class="card-footer py-4">
-                            <nav aria-label="...">
-                                <ul class="pagination justify-content-end mb-0">
-                                    {% for i in page_range %}
-                                        {% if page_n == i %}
-                                        <li id="btn_{{ i }}" class="page-item active">
-                                            <a class="page-link" href="{{ i }}">{{ i }}</a>
-                                        </li>
-                                        {% else %}
-                                        <li id="btn_{{ i }}" class="page-item">
-                                            <a class="page-link" href="{{ i }}">{{ i }}</a>
-                                        </li>
-                                        {% endif %}
-                                    {% endfor %}
-                                    <script>
-                                    $('div nav ul li a').click(function(event){
-                                        event.preventDefault();
-                                        var page_n = $(this).attr('href');
-                                        // ajax
-                                            $.ajax({
-                                                    type: "POST",
-                                                    url: "{% url 'details' object.ID %}", // name of url
-                                                    data : {
-                                                    page_n : page_n, //page_number
-                                                    csrfmiddlewaretoken: '{{ csrf_token }}',
-                                                },
-                                                success: function (resp) {
-                                                    //loop
-                                                    $("[id^=btn]").removeClass("active")
-                                                    $('#btn_'+page_n).addClass("active")
-                                                    $('#features').html('')
-                                                    $.each(resp.results, function(i, val) {
-                                                        $('#features').append('<tr><td>' + i + '</td><td>' + val + '</td></tr>')
-                                                    });
-                                                    var trCnt = $('#datatable tr').length;
-                                                    while (trCnt<6){
-                                                        $('#features').append('<tr><td>' + '-' + '</td><td>' + '-' + '</td></tr>')
-                                                        trCnt++;
-                                                    }
-                                                },
-                                                error: function () {}
-                                            }); //
+                                </tbody>
+                            </table>
+                            <div class="card-footer py-4">
+                                <nav aria-label="...">
+                                    <ul class="pagination justify-content-end mb-0">
+                                        {% for i in page_range %}
+                                            {% if page_n == i %}
+                                            <li id="btn_{{ i }}" class="page-item active">
+                                                <a class="page-link" href="{{ i }}">{{ i }}</a>
+                                            </li>
+                                            {% else %}
+                                            <li id="btn_{{ i }}" class="page-item">
+                                                <a class="page-link" href="{{ i }}">{{ i }}</a>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <script>
+                                        $('div nav ul li a').click(function(event){
+                                            event.preventDefault();
+                                            var page_n = $(this).attr('href');
+                                            // ajax
+                                                $.ajax({
+                                                        type: "POST",
+                                                        url: "{% url 'details' object.ID %}", // name of url
+                                                        data : {
+                                                        page_n : page_n, //page_number
+                                                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                                                    },
+                                                    success: function (resp) {
+                                                        //loop
+                                                        $("[id^=btn]").removeClass("active")
+                                                        $('#btn_'+page_n).addClass("active")
+                                                        $('#features').html('')
+                                                        $.each(resp.results, function(i, val) {
+                                                            $('#features').append('<tr><td>' + i + '</td><td>' + val + '</td></tr>')
+                                                        });
+                                                        var trCnt = $('#datatable tr').length;
+                                                        while (trCnt<6){
+                                                            $('#features').append('<tr><td>' + '-' + '</td><td>' + '-' + '</td></tr>')
+                                                            trCnt++;
+                                                        }
+                                                    },
+                                                    error: function () {}
+                                                }); //
 
-                                    });
-                                    </script>
-                                </ul>
-                            </nav>
+                                        });
+                                        </script>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card shadow">
+                        <div class="card-header border-0">
+                            <h5 class="card-title text-uppercase text-muted mb-0">CLASS PROBABILITIES</h5>
+                            <h2 class="mb-0">모델의 분류 결과</h2>
+                        </div>
+                        <div class="card-body border-0">
+                            <div >{{ class_prob_plot|safe }}</div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-8">
-                <div class="card shadow">
-                    <div class="row">
-                        <div class="col-xl-5">
-                            <div style="height: 100%;width: 100%">{{ class_prob_plot|safe }}</div>
+        </div>
+
+
+        <div class="container-fluid mb--300">
+            <div class="row mt-5">
+                <div class="col-xl-12">
+                    <div class="card shadow">
+                        <div class="card-header border-0">
+                            <h5 class="card-title text-uppercase text-muted mb-0">SHAP FORCE PLOT</h5>
+                            <h2 class="mb-0">모델의 분류 근거</h2>
                         </div>
-                        <div class="col-xl-7">
-                            <div style="height: 100%;width:100%">{{ local_exp_plot|safe }}</div>
+                        <div class="card-body border-0">
+                            <img src="data:image/png;base64,{{ force_plot|safe }}"  width=100%  height=100%>
                         </div>
                     </div>
                 </div>

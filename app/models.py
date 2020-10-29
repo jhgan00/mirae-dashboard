@@ -72,3 +72,8 @@ class LimeReport(models.Model):
 
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in LimeReport._meta.fields]
+
+
+class PredictionPerformance(models.Model):
+    base_ym = models.ForeignKey(InsuranceClaim, on_delete=models.CASCADE, related_name="performance")  # N:1 FK
+    performance = models.FloatField()

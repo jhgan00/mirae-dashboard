@@ -18,8 +18,8 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">Traffic</h5>
-                                        <span class="h2 font-weight-bold mb-0">350,897</span>
+                                        <h5 class="card-title text-uppercase text-muted mb-0">이번 달 총 청구건</h5>
+                                        <span class="h2 font-weight-bold mb-0">{{ total_claim }} 건</span>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon icon-shape bg-danger text-white rounded-circle shadow">
@@ -28,7 +28,7 @@
                                     </div>
                                 </div>
                                 <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-success mr-2"><i class="fa fa-arrow-up"></i> 3.48%</span>
+                                    <span class="text mr-2"><i class="fa {{ sign_claim }}"></i> {{ inc_claim }}%</span>
                                     <span class="text-nowrap">Since last month</span>
                                 </p>
                             </div>
@@ -39,8 +39,8 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">New users</h5>
-                                        <span class="h2 font-weight-bold mb-0">2,356</span>
+                                        <h5 class="card-title text-uppercase text-muted mb-0">모델 성능</h5>
+                                        <span class="h2 font-weight-bold mb-0">{{ performance }}</span>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
@@ -49,8 +49,8 @@
                                     </div>
                                 </div>
                                 <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-danger mr-2"><i class="fas fa-arrow-down"></i> 3.48%</span>
-                                    <span class="text-nowrap">Since last week</span>
+                                    <span class="text mr-2"><i class="fas {{ sign_performance }}"></i> {{ inc_performance }}%</span>
+                                    <span class="text-nowrap">Since last month</span>
                                 </p>
                             </div>
                         </div>
@@ -60,8 +60,8 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">자동화 청구건 비율</h5>
-                                        <span class="h2 font-weight-bold mb-0">924</span>
+                                        <h5 class="card-title text-uppercase text-muted mb-0">자동화 비율</h5>
+                                        <span class="h2 font-weight-bold mb-0">{{ automation }}%</span>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon icon-shape bg-yellow text-white rounded-circle shadow">
@@ -70,8 +70,8 @@
                                     </div>
                                 </div>
                                 <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-warning mr-2"><i class="fas fa-arrow-down"></i> 1.10%</span>
-                                    <span class="text-nowrap">Since yesterday</span>
+                                    <span class="text-warning mr-2"></span>
+                                    <span class="text-nowrap"></span>
                                 </p>
                             </div>
                         </div>
@@ -110,14 +110,14 @@
                     <div class="card-header bg-transparent">
                         <div class="row align-items-center">
                             <div class="col">
-                                <h6 class="text-uppercase text-light ls-1 mb-1">Overview</h6>
-                                <h2 class="text-white mb-0">Threshold & Cost</h2>
+                                <h6 class="text-uppercase text-light ls-1 mb-1">CLASSIFICATION PERFORMANCE</h6>
+                                <h2 class="text-white mb-0">F1 SCORE</h2>
                             </div>
                         </div>
                     </div>
                     <div class="card-body">
                         <!-- Chart -->
-                        {{ threshold_plot|safe }}
+                        {{ performance_plot|safe }}
                     </div>
                 </div>
             </div>
@@ -126,19 +126,29 @@
                     <div class="card-header bg-transparent">
                         <div class="row align-items-center">
                             <div class="col">
-                                <h6 class="text-uppercase text-muted ls-1 mb-1">Performance</h6>
-                                <h2 class="mb-0">오분류·수동분류 기대비용</h2>
+                                <h6 class="text-uppercase text-muted ls-1 mb-1">FEATURE IMPORTANCE</h6>
+                                <div class="table-responsive">
+                                <table id="datatable" class="table align-items-center table-flush" style="height: max-content">
+                                    <thead class="thead-light">
+                                    <tr>
+                                        <th scope="col" style="width: 50%">RANK</th>
+                                        <th scope="col" style="width: 50%">MODEL1</th>
+                                        <th scope="col" style="width: 50%">MODEL2</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="features">
+                                    {% for fi in feature_importances %}
+                                        <tr>
+                                            <td>{{ fi.rank }}</td>
+                                            <td>{{ fi.normal_feature }}</td>
+                                            <td>{{ fi.na_feature }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="card-body">
-                        <form action="." method="post">
-                            {% csrf_token %}
-                            <table class="table align-items-center table-flush">
-                                {{ form.as_table }}
-                            </table>
-                            <input type="submit" value="Submit" class="btn btn-success" name="cost"  style="float: right;">
-                        </form>
                     </div>
                 </div>
             </div>

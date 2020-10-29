@@ -139,7 +139,7 @@ os.environ["COST21"] = "3"
 os.environ["MANUAL"] = "1"
 
 os.environ["BASE_COST"] = "303779"
-os.environ["THRESHOLD"] = "85"
+os.environ["THRESHOLD"] = "57.49"
 os.environ["AUTOMATION"] = "83.29"
 os.environ["ERROR_COST"] = "74382.0"
 os.environ["CLF_COST"] = "50754.0"
@@ -147,4 +147,4 @@ os.environ["TOTAL_COST"] = "13904.0"
 os.environ["IMPROVEMENT"] = "58.81"
 
 # ENV VARIABLES: MODEL
-os.environ["base_ym"] = "201903"
+os.environ["base_ym"] = "201911"

@@ -13,13 +13,48 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from Prediction.serializers import InsuranceClaimSerializer
 from Prediction.views import InsuranceClaimPredict
-from app.models import InsuranceClaim
-from app.plots import plot_class_prob, plot_local_exp, plot_threshold
+from Prediction.apps import PredictionConfig
+from app.models import InsuranceClaim, PredictionPerformance
+from app.plots import plot_class_prob, plot_force, plot_threshold, plot_performance, plot_feature_importance
 from app.forms import CostForm
 import os
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
+
+mapper = {'nur_hosp_yn': '요양병원여부',
+ 'ac_ctr_diff': '청구일계약일기간',
+ 'hsp_avg_optt_bilg_isamt_s': '병원별평균통원청구보험금',
+ 'hsp_avg_surop_bilg_isamt_s': '병원별평균수술청구보험금',
+ 'ar_rclss_cd': '발생지역',
+ 'fds_cust_yn': '보험사기이력고객여부',
+ 'hspz_dys_s': '입원청구건수',
+ 'inamt_nvcd': '가입금액구간',
+ 'hsp_avg_diag_bilg_isamt_s': '병원별평균진단청구보험금',
+ 'blrs_cd': '치료행위',
+ 'dsas_ltwt_gcd': '질병경중등급',
+ 'dsas_avg_diag_bilg_isamt_s': '질병별평균진단청구보험금',
+ 'dsas_acd_rst_dcd': '질병구분',
+ 'kcd_gcd': 'KCD등급',
+ 'hsp_avg_hspz_bilg_isamt_s': '병원별평균입원청구보험금',
+ 'optt_blcnt_s': '통원횟수',
+ 'mtad_cntr_yn': '중도부가계약여부',
+ 'heltp_pf_ntyn': '건강인우대계약여부',
+ 'prm_nvcd': '보험료구간',
+ 'surop_blcnt_s': '수술청구건수',
+ 'mdct_inu_rclss_dcd': '의료기관구분',
+ 'dsas_avg_optt_bilg_isamt_s': '질병별평균통원청구보험금',
+ 'isrd_age_dcd': '고객연령',
+ 'hspz_blcnt_s': '입원청구건수',
+ 'dsas_avg_surop_bilg_isamt_s': '질병별평균수술청구보험금',
+ 'urlb_fc_yn': '부실판매자계약여부',
+ 'dsas_avg_hspz_bilg_isamt_s': '질병별평균입원청구보험금',
+ 'smrtg_5y_passed_yn': '보담보5년경과여부',
+ 'ac_rst_diff': '청구일부활일기간',
+ 'bilg_isamt_s': '청구보험금',
+ 'optt_nbtm_s': '통원횟수'}
+
+
 
 
 @login_required(login_url="/login/")
@@ -30,8 +65,67 @@ def profile(request):
     return HttpResponse(html_template.render(context, request))
 
 
-class HomeView(TemplateView):
+class HomeView(ListView):
     template_name = "index.html"
+    model = InsuranceClaim
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        prev_claims = self.model.objects.filter(base_ym=int(os.environ["base_ym"])-1).count()
+        n_claims = self.model.objects.filter(base_ym=os.environ["base_ym"]).count()
+        inc_claims = round((n_claims/prev_claims - 1) * 100, 2)
+
+        n_automation = self.model.objects \
+            .filter(base_ym=os.environ["base_ym"])\
+            .filter(sampling_method="automation").count()
+        automation = round((n_automation / n_claims) * 100, 2)
+
+        if inc_claims < 1: sign_claim = "fa-arrow-down"
+        else: sign_claim = "fa-arrow-up"
+
+        performance = pd.DataFrame(PredictionPerformance.objects.values())
+        performance_plot = plot_performance(performance)
+        prev_performance = performance.query(f"base_ym_id=={int(os.environ['base_ym'])-1}").performance.values[0]
+        performance = performance.query(f"base_ym_id=={os.environ['base_ym']}").performance.values[0]
+        inc_performance = round((performance/prev_performance - 1) * 100, 2)
+        if inc_performance < 1: sign_performance = "fa-arrow-down"
+        else: sign_performance = "fa-arrow-up"
+
+        normal = PredictionConfig.classifier_normal
+        na = PredictionConfig.classifier_na
+
+        fi = pd.concat([
+            pd.DataFrame(
+                list(zip(normal.feature_name_, normal.feature_importances_)),
+                columns=["normal_feature", "normal_importance"]
+            ).sort_values("normal_importance", ascending=False).head(5).assign(rank=np.arange(1,6)).reset_index(drop=True),
+            pd.DataFrame(
+                list(zip(na.feature_name_, na.feature_importances_)),
+                columns=["na_feature", "na_importance"]
+            ).sort_values("na_importance", ascending=False).head(5).assign(rank=np.arange(1,6)).reset_index(drop=True)
+        ], axis=1).to_dict("records")
+
+        context["feature_importances"] = fi
+
+        context["performance_plot"] = performance_plot
+        context["threshold"] = os.environ["THRESHOLD"]
+
+        context["total_claim"] = f'{n_claims:,}'
+        context["inc_claim"] = abs(inc_claims)
+        context["sign_claim"] = sign_claim
+        context["automation"] = automation
+
+        context["automation"] = automation
+        # context["inc_automation"] = inc_automation
+        # context["sign_automaion"] = sign_automaion
+
+        context["performance"] = performance
+        context["inc_performance"] = np.abs(inc_performance)
+        context["sign_performance"] = sign_performance
+
+        context["importance_plot"] = plot_feature_importance()
+
+        return context
 
 
 class SettingView(TemplateView):
@@ -182,24 +276,16 @@ class InsuranceClaimLV(ListView):
             prv_cnt = queryset.filter(target=label).filter(base_ym=int(os.environ["base_ym"])-1).count()
             cnt = queryset.filter(target=label).filter(base_ym=os.environ["base_ym"]).count()
 
-            if prv_cnt > cnt:
-                sign = "fa-arrow-down"
+            if prv_cnt > cnt: sign = "fa-arrow-down"
+            else: sign = "fa-arrow-up"
 
-            else:
-                sign = "fa-arrow-up"
+            try: inc = cnt/prv_cnt - 1
+            except ZeroDivisionError: inc = 0
 
-            try:
-                inc = cnt/prv_cnt - 1
-
-            except ZeroDivisionError:
-                inc = 0
-
-            if cnt > 1000:
-                cnt = str(cnt * 0.001).replace(".", ",")
-
-            context[f"cnt_{label}"] = cnt
+            context[f"cnt_{label}"] = f'{cnt:,}'
             context[f"inc_{label}"] = np.abs(round(inc * 100, 2))
             context[f"sign_{label}"] = sign
+
 
         context["unclassified_list"] = queryset.filter(target__isnull=True)
         return context
@@ -230,9 +316,11 @@ class InsuranceClaimDV(DetailView):
         # claim data
         claim_obj = context['object']
         claim = InsuranceClaimSerializer(claim_obj).data
+        data = pd.Series(claim)
+        data.index = data.index.to_series().replace(mapper)
+        claim = data.to_dict()
 
         # lime data
-        lime_obj = claim_obj.lime.all()
         labels = ["자동지급", "심사", "조사"]
 
         # init datatable pagination
@@ -250,5 +338,5 @@ class InsuranceClaimDV(DetailView):
 
         # plots
         context["class_prob_plot"] = plot_class_prob(labels, prob)
-        context["local_exp_plot"] = plot_local_exp(lime_obj.values())
+        context["force_plot"] = plot_force(data)
         return context
