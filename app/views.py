@@ -88,8 +88,8 @@ class HomeView(LoginRequiredMixin,ListView):
 
         performance = pd.DataFrame(PredictionPerformance.objects.values())
         performance_plot = plot_performance(performance)
-        prev_performance = performance.query(f"base_ym_id=={int(os.environ['base_ym'])-1}").performance.values[0]
-        performance = performance.query(f"base_ym_id=={os.environ['base_ym']}").performance.values[0]
+        prev_performance = performance.query(f"base_ym=={int(os.environ['base_ym'])-1}").performance.values[0]
+        performance = performance.query(f"base_ym=={os.environ['base_ym']}").performance.values[0]
         inc_performance = round((performance/prev_performance - 1) * 100, 2)
         if inc_performance < 1: sign_performance = "fa-arrow-down"
         else: sign_performance = "fa-arrow-up"

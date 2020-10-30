@@ -139,10 +139,11 @@ def plot_threshold(df, fpath):
 
 def plot_performance(performance):
     # performance: 데이터프레임이 그대로 넘어온 상태
+
     performance = performance.assign(
-        month = pd.to_datetime(performance.base_ym_id, format="%Y%m")
+        month = pd.to_datetime(performance.base_ym, format="%Y%m")
     )
-    performance = performance.set_index("month").drop(["id","base_ym_id"], axis=1).stack().reset_index()
+    performance = performance.set_index("month").drop(["base_ym"], axis=1).stack().reset_index()
     performance.columns = ["month", "performance", "value"]
 
     fig = px.line(

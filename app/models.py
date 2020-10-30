@@ -60,7 +60,8 @@ class InsuranceClaim(models.Model):
 
 
 
+
 class PredictionPerformance(models.Model):
-    base_ym = models.ForeignKey(InsuranceClaim, on_delete=models.CASCADE, related_name="performance")  # N:1 FK
+    base_ym = models.IntegerField(primary_key=True)
     performance = models.FloatField()
-    automation = models.FloatField(default=0)
+    automation = models.FloatField()
