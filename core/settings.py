@@ -17,7 +17,7 @@ PROJECT_DIR = Path(__file__).parent
 SECRET_KEY = config('SECRET_KEY', default='S#perS3crEt_1122')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False #config('DEBUG', default=False)
+DEBUG = True #config('DEBUG', default=False)
 
 # load production server from .env
 ALLOWED_HOSTS = ['0.0.0.0', '*', "https://mirae-289806.uc.r.appspot.com/"]
@@ -129,5 +129,5 @@ STATICFILES_DIRS = (
 #############################################################
 #############################################################
 # ENV VARIABLES: MODEL
-os.environ["base_ym"] = "201911"
+os.environ["base_ym"] = "201912"
 os.environ["THRESHOLD"] = "54.74"

@@ -156,7 +156,10 @@ class InsuranceClaimLV(LoginRequiredMixin, ListView):
     model = InsuranceClaim
     template_name = "tables.html"
     context_object_name = "claims"
-    paginate_by = 10
+    paginate_by = 5
+
+    def get_queryset(self):
+        return InsuranceClaim.objects.filter(target__isnull=True)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -1,6 +1,7 @@
 from plotly.offline import plot
 import plotly.express as px
 import pandas as pd
+import numpy as np
 import os
 import io
 import urllib
@@ -84,9 +85,9 @@ def plot_force(data):
     fplot = shap.force_plot(
         explainer.expected_value[pred],
         shap_values[pred],
-        X.values.reshape((1,-1)),
+        X.values.reshape((1,-1)).astype(float).round(2),
         feature_names = X.index,
-        matplotlib=True, show=False
+        matplotlib=True, show=False, text_rotation=25
     )
 
     buffer = io.BytesIO()
